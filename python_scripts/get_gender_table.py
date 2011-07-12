@@ -12,6 +12,17 @@ def perc(val, total):
         return 0
 
 def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
+    """
+    Gets the data from the database and writes a CSV output file with
+    the number of people who specified their gender, number of males and
+    females and other correlate data.
+    """
+
+    # add hours, min and seconds to start date in order to compare it
+    # with user_registration
+    if start_date:
+        start_date = "%s000000" % start_date
+
     tsc = ToolserverConfig()
     # connect to the MySQL server
     try:
