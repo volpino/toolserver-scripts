@@ -86,11 +86,15 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
             cursor.execute(user_count, start_date)
         result_set = cursor.fetchone()
         res["total"] = result_set[0]
-        if start_date:
-            cursor.execute(gender_count_reg, (start_date, ))
-        else:
-            cursor.execute(gender_count)
-        result_set = cursor.fetchall()
+        try:
+            if start_date:
+                cursor.execute(gender_count_reg, (start_date, ))
+            else:
+                cursor.execute(gender_count)
+            result_set = cursor.fetchall()
+        except:
+            print "Error while retrieving data from %s, skipping!" % dbname
+            continue
         for row in result_set:
             res[row[0]] = row[1]
         res["male_rel"] = perc(res["male"], res["total"])
