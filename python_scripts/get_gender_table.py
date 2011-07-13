@@ -108,9 +108,9 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
             continue
         for row in result_set:
             res[row[0]] = row[1]
-        res["male_rel"] = perc(res["male"], res["total"])
-        res["female_rel"] = perc(res["female"], res["total"])
         res["gender"] = res["male"] + res["female"]
+        res["male_rel"] = perc(res["male"], res["gender"])
+        res["female_rel"] = perc(res["female"], res["gender"])
         res["gender_rel"] = perc(res["gender"], res["total"])
         res["nogender"] = res["total"] - res["gender"]
         res["nogender_rel"] = perc(res["nogender"], res["total"])
