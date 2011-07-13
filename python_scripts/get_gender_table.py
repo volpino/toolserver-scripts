@@ -35,7 +35,8 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         sys.exit (1)
 
     cursor = conn.cursor ()
-    cursor.execute ("SELECT server, dbname, lang FROM wiki WHERE family=%s",
+    cursor.execute ("""SELECT server, dbname, lang, domain
+                       FROM wiki WHERE family=%s""",
                     (family, ))
     rows = cursor.fetchall()
 
@@ -43,7 +44,8 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         print "Couldn't find any wiki! :("
         sys.exit(1)
 
-    toolserver_data = [("sql-s%d" % row[0], row[1], row[2]) for row in rows]
+    toolserver_data = [("sql-s%d" % row[0], row[1], row[2], row[3])
+                       for row in rows]
 
     conn.close()
 
@@ -61,12 +63,12 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                                  user_registration > %s
                            GROUP BY up_value; """
     f = open(output, 'w')
-    fields =  ["lang", "total", "gender", "gender_rel", "nogender",
+    fields =  ["lang", "domain", "total", "gender", "gender_rel", "nogender",
                "nogender_rel", "female", "female_rel", "male", "male_rel"]
     csv_writer = csv.DictWriter(f, fields)
     csv_writer.writeheader()
     for data in toolserver_data:
-        server, dbname, lang = data
+        server, dbname, lang, domain = data
         print "Now processing ", server, dbname
         # if the database to process is on the same server don't disconnect,
         # just change db ;)
@@ -89,6 +91,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
 
         cursor = conn.cursor()
         res = {"lang": lang,
+               "domain": domain,
                "male": 0,
                "female": 0}
         if start_date:
