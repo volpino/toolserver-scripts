@@ -142,14 +142,13 @@ $data = array ('first_edit' => array('timestamp' => strtotime($history[0]['rev_t
                'count' => 0,
                'editors' => array(),
                'anons' =>array(),
-               'year_count' => array(),
                'minor_count' => 0,
                'count_history' => array ('today' => 0,
                                          'week' => 0,
                                          'month' => 0,
                                          'year' => 0));
 
-$first_edit_parse = date_parse ($data['first_edit']['timestamp']);
+$first_edit_parse = date_parse($history[0]['rev_timestamp']);
 
 
 //And now comes the logic for filling said master array
@@ -166,7 +165,7 @@ foreach ($history as $id => $rev) {
     }
 
 
-    $timestamp = date_parse ($rev['rev_timestamp']);
+    $timestamp = date_parse($rev['rev_timestamp']);
 
     //Fill in the blank arrays for the year and 12 months
     if (!isset ($data['year_count'][$timestamp['year']])) {
