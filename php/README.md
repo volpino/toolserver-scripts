@@ -52,8 +52,6 @@ Note: The API's output is in JSON format
 
 The APIs are open source and much code has been taken from [Xi!'s articleinfo][7]. We thank Xi a lot for his awesome work!
 
-If you're interested you can find the source code [here on Github][8]
-
  [1]: http://toolserver.org/~sonet/api.php
  [2]: http://toolserver.org/~sonet/api.php?article=London&lang=en&editors&max_editors=5
  [3]: http://toolserver.org/~sonet/api_gender.php
@@ -61,4 +59,3 @@ If you're interested you can find the source code [here on Github][8]
  [5]: http://toolserver.org/~sonet/api_geojson.php
  [6]: http://toolserver.org/~sonet/api_geojson.php?article=London&lang=en
  [7]: http://toolserver.org/~soxred93/articleinfo/
- [8]: https://github.com/volpino/toolserver-scripts/tree/master/php
