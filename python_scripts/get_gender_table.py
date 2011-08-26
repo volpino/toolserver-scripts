@@ -51,13 +51,13 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
 
     prev_server = ""
     conn = None
-    user_count = "SELECT COUNT(*) FROM user"
+    user_count = "SELECT /* SLOW_OK */ COUNT(*) FROM user"
     user_count_reg = "SELECT COUNT(*) FROM user WHERE user_registration > %s"
     gender_count = """ SELECT up_value, COUNT(*)
                        FROM user_properties
                        WHERE up_property='gender'
                        GROUP BY up_value; """
-    gender_count_reg = """ SELECT up_value, COUNT(*)
+    gender_count_reg = """ SELECT /* SLOW_OK */ up_value, COUNT(*)
                            FROM user_properties JOIN user ON up_user=user_id
                            WHERE up_property='gender' AND
                                  user_registration > %s

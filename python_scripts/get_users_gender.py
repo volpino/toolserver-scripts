@@ -58,7 +58,7 @@ for data in toolserver_data:
 
     cursor = conn.cursor()
     query = """
-            SELECT user_id, user_name, up_value
+            SELECT /* SLOW_OK */ user_id, user_name, up_value
             FROM user
                 LEFT JOIN user_properties
                 ON up_user=user_id
