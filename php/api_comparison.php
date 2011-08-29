@@ -14,6 +14,8 @@ ini_set('user_agent', 'sonet group');
 require_once('/home/sonet/Peachy/Init.php');
 require_once('/home/sonet/database.inc');
 
+$time_start = microtime(true);
+
 $pgVerbose = array();
 $pgHooks['StartLogin'][] = 'fixlogin';
 
@@ -119,8 +121,8 @@ $links2 = get_links($lang2, $article2, $wgRequest,
                     $toolserver_username, $toolserver_password);
 
 //links1 must be the min list
-echo count($links1)."\n";
-echo count($links2)."\n";
+//echo count($links1)."\n";
+//echo count($links2)."\n";
 if (count($links1) > count($links2)) {
     $tmp = $links1;
     $links1 = $links2;
@@ -143,14 +145,14 @@ $result = array();
 
 for ($i=0; $i<(count($links1)/10.0); $i++) {
     $current_pages = array_slice($links1, $i*10, 10);
-    $base = "http://en.wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
+    $base = "http://".$lang1.".wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
            implode("|", $current_pages)."&lllimit=500&redirects&format=json";
     $cont = true;
     $url = $base;
 
     while ($cont) {
         $data = json_decode(file_get_contents($url), true);
-        echo $url."<br/>";
+        //echo $url."<br/>";
         foreach ($data["query"]["pages"] as $id => $elem) {
             if (array_key_exists("langlinks", $elem)) {
                 foreach ($elem["langlinks"] as $ll) {
@@ -163,7 +165,6 @@ for ($i=0; $i<(count($links1)/10.0); $i++) {
         }
 
         if (array_key_exists("query-continue", $data)) {
-            echo "CONTINUE<br/>";
             $url = $base."&llcontinue=".$data["query-continue"]["langlinks"]["llcontinue"];
         }
         else {
@@ -172,53 +173,22 @@ for ($i=0; $i<(count($links1)/10.0); $i++) {
     }
 }
 
-foreach ($links2 as $link) {
-    echo $link;
-    if (in_array($link, $result)) {
+foreach ($result as $link) {
+    //echo $link;
+    if (in_array($link, $links2)) {
         $match += 1;
-        echo " matches <br/>";
+        //echo " matches <br/>";
     }
     else {
         $no_match += 1;
-        echo " doesn't match <br/>";
+        //echo " doesn't match <br/>";
     }
 }
 
-
-/*foreach ($links1 as $link) {
-    try {
-        $pageClass = $site->initPage($link, null,
-                                     !$wgRequest->getSafeVal('getBool',
-                                                             'nofollowredir'));
-    }
-    catch (Exception $e) {
-        continue;
-    }
-
-    $langlinks = $pageClass->get_langlinks();
-
-    $name = null;
-    foreach ($langlinks as $ll) {
-        $res = explode(":", $ll, 2);
-        if ($res[0] == $lang2) {
-            $name = str_replace(" ", "_", $res[1]);
-            break;
-        }
-    }
-
-    if ($name && (in_array($name, $links2))) {
-        $match += 1;
-        echo $link." matches <br/>";
-    }
-    else {
-        $no_match += 1;
-        echo $link." doesn't match <br/>";
-    }
-    //print_r($pageClass);
-    //echo "--------------------";
-}*/
-
-echo $match."\n";
-echo $no_match;
+//echo $match."\n";
+//echo $no_match;
+$exectime = microtime(true) - $time_start;
+print_result(array("result" => $match/count($links1),
+                   "exectime" => $exectime));
 
 ?>
