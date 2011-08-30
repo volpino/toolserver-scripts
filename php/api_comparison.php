@@ -8,7 +8,7 @@
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 ini_set("memory_limit", '64M');
-ini_set('user_agent', 'sonet group');
+ini_set('user_agent', 'SoNet BOT');
 
 //Requires
 require_once('/home/sonet/Peachy/Init.php');
@@ -88,8 +88,8 @@ function get_links($lang, $page, $wgRequest,
     $conds = array ('pl_from = '.$dbr->strencode ($pageClass->get_id ()));
 
     $links = $dbr->select (array('pagelinks'),
-                            array('pl_title', 'pl_namespace'),
-                            $conds, array('LIMIT' => 50000));
+                           array('pl_title', 'pl_namespace'),
+                           $conds, array('LIMIT' => 50000));
 
     if (!count($links))
         toDie ("There are no outer links");
@@ -97,23 +97,27 @@ function get_links($lang, $page, $wgRequest,
     foreach ($links as $id => $link) {
         if (!is_numeric($link["pl_title"][0])) {
             // skip pages that start with a number (e.g.: years)
+            $page = false;
             if ($link['pl_namespace'] == 0) {
-                $data[] = str_replace(" ", "_", $link["pl_title"]);
+                $page = str_replace(" ", "_", $link["pl_title"]);
             }
             else if ($link['pl_namespace'] == 1) {
-                $data[] = "Talk:".str_replace(" ", "_", $link["pl_title"]);
+                $page = "Talk:".str_replace(" ", "_", $link["pl_title"]);
             }
             else if ($link['pl_namespace'] == 2) {
-                $data[] = "User:".str_replace(" ", "_", $link["pl_title"]);
+                $page = "User:".str_replace(" ", "_", $link["pl_title"]);
             }
             else if ($link['pl_namespace'] == 3) {
-                $data[] = "User_Talk:".str_replace(" ", "_", $link["pl_title"]);
+                $page = "User_Talk:".str_replace(" ", "_", $link["pl_title"]);
             }
             else if ($link['pl_namespace'] == 4) {
-                $data[] = "Wikipedia:".str_replace(" ", "_", $link["pl_title"]);
+                $page = "Wikipedia:".str_replace(" ", "_", $link["pl_title"]);
             }
             else if ($link['pl_namespace'] == 12) {
-                $data[] = "Help:".str_replace(" ", "_", $link["pl_title"]);
+                $page = "Help:".str_replace(" ", "_", $link["pl_title"]);
+            }
+            if ($page) {
+                $data[] = $page;
             }
         }
     }
@@ -168,7 +172,7 @@ $result = array();
 for ($i=0; $i<(count($links1)/10.0); $i++) {
     $current_pages = array_slice($links1, $i*10, 10);
     $base = "http://".$lang1.".wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
-           implode("|", $current_pages)."&lllimit=500&redirects&format=json";
+           urlencode(implode("|", $current_pages))."&lllimit=500&redirects&format=json";
     $cont = true;
     $url = $base;
 
@@ -192,6 +196,24 @@ for ($i=0; $i<(count($links1)/10.0); $i++) {
         else {
             $cont = false;
         }
+    }
+}
+
+$tmp = $links2;
+for ($i=0; $i<(count($tmp)/40.0); $i++) {
+    $current_pages = array_slice($tmp, $i*40, 40);
+    $url = "http://".$lang2.".wikipedia.org/w/api.php?action=query&titles=".
+           urlencode(implode("|", $current_pages))."&redirects&format=json";
+    $data = json_decode(file_get_contents($url), true);
+    if ($data && array_key_exists("redirects", $data["query"])) {
+        $from = array();
+        $to = array();
+        foreach ($data["query"]["redirects"] as $id => $elem) {
+            $from[] = str_replace(" ", "_", $elem["from"]);
+            $to[] = str_replace(" ", "_", $elem["to"]);
+        }
+        $links2 = array_diff($links2, $from);
+        $links2 = array_merge($links2, $to);
     }
 }
 
