@@ -145,8 +145,6 @@ $links2 = get_links($lang2, $article2, $wgRequest,
                     $toolserver_username, $toolserver_password);
 
 //links1 must be the min list
-//echo count($links1)."\n";
-//echo count($links2)."\n";
 $swapped = false;
 if (count($links1) > count($links2)) {
     $tmp = $links1;
@@ -159,18 +157,15 @@ if (count($links1) > count($links2)) {
     $swapped = true;
 }
 
-//Comparing the links lists!
 $wiki = $wgRequest->getSafeVal('wiki', 'wikipedia');
 $url = $lang1.'.'.$wiki.'.org';
 $site = Peachy::newWiki(null, null, null, 'http://'.$url.'/w/api.php');
 
-$no_match = 0;
-$match = 0;
-
 $result = array();
 
-for ($i=0; $i<(count($links1)/10.0); $i++) {
-    $current_pages = array_slice($links1, $i*10, 10);
+// send 10 pages a time to wikipedia api.php
+for ($i=0; $i<=(count($links1)/10); $i++) {
+    $current_pages = array_slice($links1, $i*10, 10, true);
     $base = "http://".$lang1.".wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
            urlencode(implode("|", $current_pages))."&lllimit=500&redirects&format=json";
     $cont = true;
@@ -178,18 +173,24 @@ for ($i=0; $i<(count($links1)/10.0); $i++) {
 
     while ($cont) {
         $data = json_decode(file_get_contents($url), true);
-        //echo $url."<br/>";
+        //populate result
         foreach ($data["query"]["pages"] as $id => $elem) {
+            $added = false;
             if (array_key_exists("langlinks", $elem)) {
                 foreach ($elem["langlinks"] as $ll) {
                     if ($ll["lang"] == $lang2) {
                         $result[$elem["title"]] = str_replace(" ", "_", $ll["*"]);
+                        $added = true;
                         break;
                     }
                 }
             }
+            if (!$added) {
+                $result[$elem["title"]] = str_replace(" ", "_", $elem["title"]);
+            }
         }
 
+        //if retrieved data is not complete follow llcontinue
         if (array_key_exists("query-continue", $data)) {
             $url = $base."&llcontinue=".$data["query-continue"]["langlinks"]["llcontinue"];
         }
@@ -199,8 +200,9 @@ for ($i=0; $i<(count($links1)/10.0); $i++) {
     }
 }
 
+//check for redirects
 $tmp = $links2;
-for ($i=0; $i<(count($tmp)/40.0); $i++) {
+for ($i=0; $i<=(count($tmp)/40.0); $i++) {
     $current_pages = array_slice($tmp, $i*40, 40);
     $url = "http://".$lang2.".wikipedia.org/w/api.php?action=query&titles=".
            urlencode(implode("|", $current_pages))."&redirects&format=json";
@@ -217,12 +219,15 @@ for ($i=0; $i<(count($tmp)/40.0); $i++) {
     }
 }
 
+//create output array
 $output = array("matching" => array(),
                 "nonmatching1" => array(),
                 "nonmatching2" => array());
 $matching = array();
+
+//check for matching links
+$match = 0;
 foreach ($result as $original => $langlink) {
-    //echo $link;
     if (in_array($langlink, $links2)) {
         if (!$swapped) {
             $output["matching"][] = array($original, $langlink);
@@ -231,8 +236,7 @@ foreach ($result as $original => $langlink) {
             $output["matching"][] = array($langlink, $original);
         }
         $matching[] = $langlink;
-        $match += 1;
-        //echo " matches <br/>";
+        $match++;
     }
     else {
         if (!$swapped) {
@@ -241,11 +245,10 @@ foreach ($result as $original => $langlink) {
         else {
             $output["nonmatching2"][] = $original;
         }
-        $no_match += 1;
-        //echo " doesn't match <br/>";
     }
 }
 
+//fill nonmatching with remaining links
 foreach ($links2 as $link) {
     if (!(in_array($link, $matching))) {
         if (!$swapped) {
@@ -257,11 +260,9 @@ foreach ($links2 as $link) {
     }
 }
 
-//echo $match."\n";
-//echo $no_match;
 $exectime = microtime(true) - $time_start;
 if (count($links1) > 3) {
-    $res = $match/count($links1);
+    $res = $match / count($result);
 }
 else {
     $res = "N/A";
