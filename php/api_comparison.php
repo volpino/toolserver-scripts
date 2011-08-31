@@ -270,7 +270,10 @@ else {
 
 $output["result"] = $res;
 $output["exectime"] = $exectime;
-
+$output["l1"] = $lang1;
+$output["a1"] = $article1;
+$output["l2"] = $lang2;
+$output["a2"] = $article2;
 print_result($output);
 
 ?>
