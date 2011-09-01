@@ -167,7 +167,7 @@ $result = array();
 for ($i=0; $i<=(count($links1)/10); $i++) {
     $current_pages = array_slice($links1, $i*10, 10, true);
     $base = "http://".$lang1.".wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
-           urlencode(implode("|", $current_pages))."&lllimit=500&redirects&format=json";
+            urlencode(implode("|", $current_pages))."&lllimit=500&redirects&format=json";
     $cont = true;
     $url = $base;
 
@@ -175,18 +175,17 @@ for ($i=0; $i<=(count($links1)/10); $i++) {
         $data = json_decode(file_get_contents($url), true);
         //populate result
         foreach ($data["query"]["pages"] as $id => $elem) {
-            $added = false;
+            $title = urlencode($elem["title"]);
             if (array_key_exists("langlinks", $elem)) {
                 foreach ($elem["langlinks"] as $ll) {
                     if ($ll["lang"] == $lang2) {
-                        $result[$elem["title"]] = str_replace(" ", "_", $ll["*"]);
-                        $added = true;
+                        $result[$title] = str_replace(" ", "_", $ll["*"]);
                         break;
                     }
                 }
             }
-            if (!$added) {
-                $result[$elem["title"]] = str_replace(" ", "_", $elem["title"]);
+            if (!array_key_exists($title, $result)) {
+                $result[$title] = str_replace(" ", "_", $elem["title"]);
             }
         }
 
@@ -228,6 +227,7 @@ $matching = array();
 //check for matching links
 $match = 0;
 foreach ($result as $original => $langlink) {
+    $original = urldecode($original);
     if (in_array($langlink, $links2)) {
         if (!$swapped) {
             $output["matching"][] = array($original, $langlink);
@@ -270,10 +270,16 @@ else {
 
 $output["result"] = $res;
 $output["exectime"] = $exectime;
-$output["l1"] = $lang1;
 $output["a1"] = $article1;
-$output["l2"] = $lang2;
 $output["a2"] = $article2;
+if (!$swapped) {
+    $output["l1"] = $lang1;
+    $output["l2"] = $lang2;
+}
+else {
+    $output["l1"] = $lang2;
+    $output["l2"] = $lang1;
+}
 print_result($output);
 
 ?>
