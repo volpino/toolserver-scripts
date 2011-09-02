@@ -282,4 +282,42 @@ else {
 }
 print_result($output);
 
+mysql_connect("sql-toolserver", $toolserver_username, $toolserver_password)
+        or die("Unable to connect to MySQL");
+mysql_select_db('u_sonet')
+        or die("Could not select db!");
+$qry = "CREATE TABLE IF NOT EXISTS `api_comparison_log` (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `when` TIMESTAMP DEFAULT NOW() NOT NULL,
+            `left_lang` VARCHAR(20) NOT NULL,
+            `left_page` TEXT NOT NULL,
+            `right_lang` VARCHAR(20) NOT NULL,
+            `right_page` TEXT NOT NULL,
+            `left_links` INT NOT NULL,
+            `right_links` INT NOT NULL,
+            `matching_links` INT NOT NULL,
+            `similarity_index` REAL NOT NULL
+        );";
+mysql_query($qry);
+$qry = "INSERT INTO `api_comparison_log` (
+            `left_lang`,
+            `left_page`,
+            `right_lang`,
+            `right_page`,
+            `left_links`,
+            `right_links`,
+            `matching_links`,
+            `similarity_index`)
+        VALUES (
+            '".mysql_real_escape_string(strip_tags($output["l1"]))."',
+            '".mysql_real_escape_string(strip_tags($output["a1"]))."',
+            '".mysql_real_escape_string(strip_tags($output["l2"]))."',
+            '".mysql_real_escape_string(strip_tags($output["a2"]))."',
+            ".(count($output["nonmatching1"])+$match).",
+            ".(count($output["nonmatching2"])+$match).",
+            ".$match.",
+            ".($match/count($result))."
+        );";
+mysql_query($qry) or die("Logging failed");
+
 ?>
