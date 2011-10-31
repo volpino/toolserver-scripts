@@ -52,19 +52,26 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
     prev_server = ""
     conn = None
     user_count = "SELECT /* SLOW_OK */ COUNT(*) FROM user"
-    user_count_reg = "SELECT COUNT(*) FROM user WHERE user_registration > %s"
-    gender_count = """ SELECT up_value, COUNT(*)
-                       FROM user_properties
+    edit_count = "SELECT /*SLOW_OK */ SUM(user_editcount) FROM user"
+    user_count_reg = ("SELECT /* SLOW OK */ COUNT(*) FROM user "
+                      "WHERE user_registration > %s")
+    gender_count = """ SELECT /* SLOW_OK */
+                           up_value, COUNT(*), SUM(user_editcount)
+                       FROM user_properties JOIN user ON up_user=user_id
                        WHERE up_property='gender'
                        GROUP BY up_value; """
-    gender_count_reg = """ SELECT /* SLOW_OK */ up_value, COUNT(*)
+    gender_count_reg = """ SELECT /* SLOW_OK */
+                               up_value, COUNT(*), SUM(user_editcount)
                            FROM user_properties JOIN user ON up_user=user_id
                            WHERE up_property='gender' AND
                                  user_registration > %s
                            GROUP BY up_value; """
     f = open(output, 'w')
     fields =  ["lang", "domain", "total", "gender", "gender_rel", "nogender",
-               "nogender_rel", "female", "female_rel", "male", "male_rel"]
+               "nogender_rel", "female", "female_rel", "male", "male_rel",
+               "total_edits", "gender_edits", "gender_rel_edits",
+               "nogender_edits", "nogender_rel_edits", "female_edits",
+               "female_rel_edits", "male_edits" "male_rel_edits"]
     csv_writer = csv.DictWriter(f, fields)
     csv_writer.writeheader()
     for data in toolserver_data:
@@ -100,6 +107,9 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
             cursor.execute(user_count, start_date)
         result_set = cursor.fetchone()
         res["total"] = result_set[0]
+        cursor.execute(edit_count)
+        result_set = cursor.fetchone()
+        res["total_edits"] = result_set[0]
         try:
             if start_date:
                 cursor.execute(gender_count_reg, (start_date, ))
@@ -109,14 +119,25 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         except:
             print "Error while retrieving data from %s, skipping!" % dbname
             continue
+
         for row in result_set:
             res[row[0]] = row[1]
+            res["%s_edits" % row[0]] = row[2]
         res["gender"] = res["male"] + res["female"]
         res["male_rel"] = perc(res["male"], res["gender"])
         res["female_rel"] = perc(res["female"], res["gender"])
         res["gender_rel"] = perc(res["gender"], res["total"])
         res["nogender"] = res["total"] - res["gender"]
         res["nogender_rel"] = perc(res["nogender"], res["total"])
+        res["gender_edits"] = res["male_edits"] + res["female_edits"]
+        res["female_rel_edits"] = perc(res["female_edits"],
+                                       res["gender_edits"])
+        res["male_rel_edits"] = perc(res["male_edits"], res["gender_edits"])
+        res["gender_rel_edits"] = perc(res["gender_edits"], res["total_edits"])
+        res["nogender_edits"] = res["total_edits"] - res["gender_edits"]
+        res["nogender_rel_edits"] = perc(res["nogender_edits"],
+                                         res["total_edits"])
+
         csv_writer.writerow(res)
         conn.commit()
 
