@@ -126,7 +126,7 @@ foreach( $history as $id => $rev ) {
 }
 
 $res = $dbr->select(
-        array('user_properties' ),
+        array('user_properties'),
         array('up_user', 'up_property', 'up_value'),
         array('up_user IN ('.implode(",", array_keys($users)).")",
               "up_property='gender'")

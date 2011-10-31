@@ -41,6 +41,57 @@ function fixlogin( &$config ) {
     $config['httpecho'] = true;
 }
 
+function cache_store($lang1, $page1, $lang2, $page2) {
+    global $toolserver_username;
+    global $toolserver_password;
+    mysql_connect("sql-toolserver", $toolserver_username, $toolserver_password)
+        or die("Unable to connect to MySQL");
+    mysql_select_db('u_sonet')
+        or die("Could not select db!");
+    $qry = "CREATE TABLE IF NOT EXISTS `api_comparison_cache` (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `when` TIMESTAMP DEFAULT NOW() NOT NULL,
+            `lang1` VARCHAR(20) NOT NULL,
+            `page1` TEXT NOT NULL,
+            `lang2` VARCHAR(20) NOT NULL,
+            `page2` TEXT NOT NULL
+            );";
+    mysql_query($qry) or die("Creation failed");
+    $qry = "INSERT INTO `api_comparison_cache` (
+            `lang1`,
+            `page1`,
+            `lang2`,
+            `page2`)
+        VALUES (
+            '".mysql_real_escape_string(strip_tags($lang1))."',
+            '".mysql_real_escape_string(strip_tags($page1))."',
+            '".mysql_real_escape_string(strip_tags($lang2))."',
+            '".mysql_real_escape_string(strip_tags($page2))."'
+        );";
+    mysql_query($qry) or die("Storing failed");
+}
+
+function cache_load($lang1, $page1, $lang2) {
+    global $toolserver_username;
+    global $toolserver_password;
+    mysql_connect("sql-toolserver", $toolserver_username, $toolserver_password)
+        or die("Unable to connect to MySQL");
+    mysql_select_db('u_sonet')
+        or die("Could not select db!");
+    $qry = "SELECT page2 FROM `api_comparison_cache` WHERE
+            lang1='".mysql_real_escape_string(strip_tags($lang1))."' AND ".
+           "lang2='".mysql_real_escape_string(strip_tags($lang2))."' AND ".
+           "page1='".mysql_real_escape_string(strip_tags($page1))."';";
+    $result = mysql_query($qry);
+    if ($result) {
+        $row = mysql_fetch_array($result, MYSQL_ASSOC);
+        return $row["page2"];
+    }
+    else {
+        return false;
+    }
+}
+
 function get_links($lang, $page, $wgRequest,
                    $toolserver_username, $toolserver_password) {
     $wiki = $wgRequest->getSafeVal('wiki', 'wikipedia');
@@ -162,10 +213,20 @@ $url = $lang1.'.'.$wiki.'.org';
 $site = Peachy::newWiki(null, null, null, 'http://'.$url.'/w/api.php');
 
 $result = array();
-
+$cached = array();
+foreach ($links1 as $link) {
+    $link = str_replace(" ", "_", $link);
+    $res = cache_load($lang1, $link, $lang2);
+    if ($res) {
+        $result[$link] = $res;
+        $cached[] = $link;
+    }
+}
 // send 10 pages a time to wikipedia api.php
-for ($i=0; $i<=(count($links1)/10); $i++) {
-    $current_pages = array_slice($links1, $i*10, 10, true);
+$tmp = $links1;
+$tmp = array_diff($tmp, $cached);
+for ($i=0; $i<=(count($tmp)/10); $i++) {
+    $current_pages = array_slice($tmp, $i*10, 10, true);
     $base = "http://".$lang1.".wikipedia.org/w/api.php?action=query&prop=langlinks&titles=".
             urlencode(implode("|", $current_pages))."&lllimit=500&redirects&format=json";
     $cont = true;
@@ -174,18 +235,24 @@ for ($i=0; $i<=(count($links1)/10); $i++) {
     while ($cont) {
         $data = json_decode(file_get_contents($url), true);
         //populate result
-        foreach ($data["query"]["pages"] as $id => $elem) {
-            $title = urlencode($elem["title"]);
-            if (array_key_exists("langlinks", $elem)) {
-                foreach ($elem["langlinks"] as $ll) {
-                    if ($ll["lang"] == $lang2) {
-                        $result[$title] = str_replace(" ", "_", $ll["*"]);
-                        break;
+        if (array_key_exists("query", $data)) {
+            foreach ($data["query"]["pages"] as $id => $elem) {
+                $title = urlencode($elem["title"]);
+                if (array_key_exists("langlinks", $elem)) {
+                    foreach ($elem["langlinks"] as $ll) {
+                        if ($ll["lang"] == $lang2) {
+                            if (in_array($elem["title"], $links1)) {
+                                cache_store($lang1, str_replace(" ", "_", $elem["title"]),
+                                            $ll["lang"], str_replace(" ", "_", $ll["*"]));
+                            }
+                            $result[$title] = str_replace(" ", "_", $ll["*"]);
+                            break;
+                        }
                     }
                 }
-            }
-            if (!array_key_exists($title, $result)) {
-                $result[$title] = str_replace(" ", "_", $elem["title"]);
+                if (!array_key_exists($title, $result)) {
+                    $result[$title] = str_replace(" ", "_", $elem["title"]);
+                }
             }
         }
 
@@ -282,10 +349,11 @@ else {
 }
 print_result($output);
 
+
 mysql_connect("sql-toolserver", $toolserver_username, $toolserver_password)
-        or die("Unable to connect to MySQL");
+    or die("Unable to connect to MySQL");
 mysql_select_db('u_sonet')
-        or die("Could not select db!");
+    or die("Could not select db!");
 $qry = "CREATE TABLE IF NOT EXISTS `api_comparison_log` (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `when` TIMESTAMP DEFAULT NOW() NOT NULL,
