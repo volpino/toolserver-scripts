@@ -8,7 +8,7 @@ from toolserver import ToolserverConfig
 def perc(val, total):
     try:
         return float(val) / float(total)
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError, ValueError):
         return 0
 
 def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
