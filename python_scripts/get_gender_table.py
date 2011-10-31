@@ -71,7 +71,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                "nogender_rel", "female", "female_rel", "male", "male_rel",
                "total_edits", "gender_edits", "gender_rel_edits",
                "nogender_edits", "nogender_rel_edits", "female_edits",
-               "female_rel_edits", "male_edits" "male_rel_edits"]
+               "female_rel_edits", "male_edits", "male_rel_edits"]
     csv_writer = csv.DictWriter(f, fields)
     csv_writer.writeheader()
     for data in toolserver_data:
