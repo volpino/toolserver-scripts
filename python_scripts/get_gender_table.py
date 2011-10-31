@@ -100,7 +100,9 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         res = {"lang": lang,
                "domain": domain,
                "male": 0,
-               "female": 0}
+               "female": 0,
+               "male_edits": 0,
+               "female_edits: 0"}
         if start_date:
             cursor.execute(user_count_reg, (start_date, ))
         else:
