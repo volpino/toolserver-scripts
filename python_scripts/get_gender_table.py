@@ -112,6 +112,8 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         cursor.execute(edit_count)
         result_set = cursor.fetchone()
         res["total_edits"] = result_set[0]
+        if not res["total_edits"]:
+            continue
         try:
             if start_date:
                 cursor.execute(gender_count_reg, (start_date, ))
