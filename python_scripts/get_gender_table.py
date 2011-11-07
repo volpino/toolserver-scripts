@@ -103,11 +103,19 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                "female": 0,
                "male_edits": 0,
                "female_edits": 0}
-        if start_date:
-            cursor.execute(user_count_reg, (start_date, ))
-        else:
-            cursor.execute(user_count, start_date)
-        result_set = cursor.fetchone()
+
+        result_set = None
+        counter = 0
+        while result_set is None and counter <= 2:
+            if start_date:
+                cursor.execute(user_count_reg, (start_date, ))
+            else:
+                cursor.execute(user_count, start_date)
+            result_set = cursor.fetchone()
+            counter += 1
+        if not result_set:
+            print "Query killed on %s, skipping!" % dbname
+            continue
         res["total"] = result_set[0]
         cursor.execute(edit_count)
         result_set = cursor.fetchone()
