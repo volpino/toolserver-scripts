@@ -6,6 +6,7 @@ import csv
 from toolserver import ToolserverConfig
 import urllib
 import simplejson
+import pycountry
 
 def perc(val, total):
     try:
