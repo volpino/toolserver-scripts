@@ -4,12 +4,45 @@ import sys
 import MySQLdb
 import csv
 from toolserver import ToolserverConfig
+import urllib
+import simplejson
 
 def perc(val, total):
     try:
         return float(val) / float(total)
     except (ZeroDivisionError, TypeError, ValueError):
         return 0
+
+def get_translation(code):
+    try:
+        return pycountry.languages.get(alpha2=code.lower()).name
+    except KeyError:
+        pass
+    try:
+        return pycountry.languages.get(bibliographic=code.lower()).name
+    except KeyError:
+        pass
+    try:
+        pycountry.countries.get(alpha2=code.upper()).name
+    except KeyError:
+        pass
+    return ""
+
+def get_welcome_data(lang="en", family="wikipedia"):
+    api_base = "http://toolserver.org/~sonet/api.php"
+    article = "Mediawiki:Welcomecreation"
+    options = {"article": article,
+               "lang": lang,
+               "family": family}
+    url = "%s?%s" % (api_base, urllib.urlencode(options))
+    result = simplejson.load(urllib.urlopen(url))
+    edits = -1
+    editors = -1
+    if not "error" in result:
+        edits = result["count"]
+        editors = result["editor_count"]
+    return edits, editors
+
 
 def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
     """
@@ -67,11 +100,12 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                                  user_registration > %s
                            GROUP BY up_value; """
     f = open(output, 'w')
-    fields =  ["lang", "domain", "total", "gender", "gender_rel", "nogender",
-               "nogender_rel", "female", "female_rel", "male", "male_rel",
-               "total_edits", "gender_edits", "gender_rel_edits",
+    fields =  ["lang", "hlang", "domain", "total", "gender", "gender_rel",
+               "nogender", "nogender_rel", "female", "female_rel", "male",
+               "male_rel", "total_edits", "gender_edits", "gender_rel_edits",
                "nogender_edits", "nogender_rel_edits", "female_edits",
-               "female_rel_edits", "male_edits", "male_rel_edits"]
+               "female_rel_edits", "male_edits", "male_rel_edits",
+               "welcome_edits", "welcome_editors"]
     csv_writer = csv.DictWriter(f, fields)
     csv_writer.writeheader()
     for data in toolserver_data:
@@ -97,8 +131,12 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
             conn.select_db(dbname)
 
         cursor = conn.cursor()
+        edits, editors = get_welcome_data(lang)
         res = {"lang": lang,
                "domain": domain,
+               "hlang": get_translation(lang),
+               "welcome_edits": edits,
+               "welcome_editors": editors,
                "male": 0,
                "female": 0,
                "male_edits": 0,
@@ -154,7 +192,6 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
         res["nogender_edits"] = res["total_edits"] - res["gender_edits"]
         res["nogender_rel_edits"] = perc(res["nogender_edits"],
                                          res["total_edits"])
-
         csv_writer.writerow(res)
         conn.commit()
 
