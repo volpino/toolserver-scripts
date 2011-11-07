@@ -117,8 +117,13 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
             print "Query killed on %s, skipping!" % dbname
             continue
         res["total"] = result_set[0]
-        cursor.execute(edit_count)
-        result_set = cursor.fetchone()
+        counter = 0
+        while result_set is None and counter <= 2:
+            cursor.execute(edit_count)
+            result_set = cursor.fetchone()
+        if not result_set:
+            print "Query killed on %s, skipping!" % dbname
+            continue
         res["total_edits"] = result_set[0]
         if not res["total_edits"]:
             continue
