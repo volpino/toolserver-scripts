@@ -7,6 +7,9 @@ from toolserver import ToolserverConfig
 import urllib
 import simplejson
 import pycountry
+import re
+
+FIND_LINK = re.compile(r"\[\[[^\[\]]+\]\]")
 
 def perc(val, total):
     try:
@@ -28,6 +31,27 @@ def get_translation(code):
     except KeyError:
         pass
     return ""
+
+def get_links(lang="en"):
+    api_base = "http://en.wikipedia.org/w/api.php"
+    article = "Mediawiki:Welcomecreation"
+    options = {"action": "query",
+               "titles": article,
+               "redirects": 1,
+               "prop": "revisions",
+               "rvprop": "content",
+               "format": "json"}
+    url = "%s?%s" % (api_base, urllib.urlencode(options))
+    result = simplejson.load(urllib.urlopen(url))
+    page_id = result["query"]["pages"].keys()[0]
+    links = -1
+    try:
+        content = result["query"]["pages"][page_id]["revisions"][0]["*"]
+    except KeyError:
+        pass
+    else:
+        links = len(FIND_LINK.findall(content))
+    return links
 
 def get_welcome_data(lang="en", family="wikipedia"):
     api_base = "http://toolserver.org/~sonet/api.php"
