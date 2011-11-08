@@ -18,19 +18,20 @@ def perc(val, total):
         return 0
 
 def get_translation(code):
+    name = ""
     try:
-        return pycountry.languages.get(alpha2=code.lower()).name
+        name = pycountry.languages.get(alpha2=code.lower()).name
     except KeyError:
         pass
     try:
-        return pycountry.languages.get(bibliographic=code.lower()).name
+        name = pycountry.languages.get(bibliographic=code.lower()).name
     except KeyError:
         pass
     try:
-        pycountry.countries.get(alpha2=code.upper()).name
+        name = pycountry.countries.get(alpha2=code.upper()).name
     except KeyError:
         pass
-    return ""
+    return name.encode("utf-8")
 
 def get_links(lang="en"):
     api_base = "http://en.wikipedia.org/w/api.php"
