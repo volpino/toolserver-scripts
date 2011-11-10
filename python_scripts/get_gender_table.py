@@ -33,7 +33,7 @@ def get_translation(code):
         pass
     return name.encode("utf-8")
 
-def get_links(lang="en"):
+def get_welcome_links(lang="en"):
     api_base = "http://en.wikipedia.org/w/api.php"
     article = "Mediawiki:Welcomecreation"
     options = {"action": "query",
@@ -131,7 +131,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                "male_rel", "total_edits", "gender_edits", "gender_rel_edits",
                "nogender_edits", "nogender_rel_edits", "female_edits",
                "female_rel_edits", "male_edits", "male_rel_edits",
-               "welcome_edits", "welcome_editors"]
+               "welcome_edits", "welcome_editors", "welcome_links"]
     csv_writer = csv.DictWriter(f, fields)
     csv_writer.writeheader()
     for data in toolserver_data:
@@ -163,6 +163,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
                "hlang": get_translation(lang),
                "welcome_edits": edits,
                "welcome_editors": editors,
+               "welcome_links": get_welcome_links(lang),
                "male": 0,
                "female": 0,
                "male_edits": 0,
