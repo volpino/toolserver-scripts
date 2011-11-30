@@ -61,7 +61,10 @@ def get_welcome_data(lang="en", family="wikipedia"):
                "lang": lang,
                "family": family}
     url = "%s?%s" % (api_base, urllib.urlencode(options))
-    result = simplejson.load(urllib.urlopen(url))
+    try:
+        result = simplejson.load(urllib.urlopen(url))
+    except:
+        return -1, -1
     edits = -1
     editors = -1
     if not "error" in result:
