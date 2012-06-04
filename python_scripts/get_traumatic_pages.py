@@ -152,7 +152,7 @@ def main():
                                     int(is_t), int(is_nt), int(is_n), int(is_h)
                                 ]
                                 csv_writer[t].writerow(
-                                    [page] + row + belonging
+                                    [page] + edits_row + belonging
                                 )
                             else:
                                 continue
