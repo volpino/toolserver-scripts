@@ -24,7 +24,7 @@ def main():
     p.add_option('-N', '--non-traumatic', action="store", dest="non_traumatic",
                  help="Non traumatic categories list (semicolon separated)")
     p.add_option('-e', '--min-edits', action="store", dest="min_edits",
-                 help="Minimum number of edits")
+                 help="Minimum number of edits", type="int")
     opts, files = p.parse_args()
 
     if len(files) != 2:
@@ -150,7 +150,7 @@ def main():
                             if int(edits_row[0]) > opts.min_edits and t == 1:
                                 belonging = [is_t, is_nt, is_n, is_h]
                                 csv_writer[t].writerow(
-                                    [page, t] + row + belonging
+                                    [page] + row + belonging
                                 )
                             else:
                                 continue
