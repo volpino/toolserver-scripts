@@ -16,7 +16,7 @@ def main():
         usage="usage: %prog [options] input_file output_file")
     p.add_option('-t', '--traumatic', action="store", dest="traumatic",
                  help="Traumatic categories list (semicolon separated)")
-    p.add_option('-h', '--human', action="store", dest="human",
+    p.add_option('-H', '--human', action="store", dest="human",
                  help="Human disasters categories list (semicolon separated)")
     p.add_option('-n', '--natural', action="store", dest="natural",
                  help=("Natural disasters categories list"
