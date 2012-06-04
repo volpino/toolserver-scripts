@@ -147,7 +147,7 @@ def main():
                             cursor.execute(query)
                             edits_row = list(cursor.fetchone())
 
-                            if edits_row[0] > opts.min_edits and t == 1:
+                            if int(edits_row[0]) > opts.min_edits and t == 1:
                                 belonging = [is_t, is_nt, is_n, is_h]
                                 csv_writer[t].writerow(
                                     [page, t] + row + belonging
