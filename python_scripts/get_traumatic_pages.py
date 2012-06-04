@@ -118,7 +118,7 @@ def main():
                 if row[2] == "subcat":
                     new_subcats.append(
                         (
-                            subcat,
+                            row[0],
                             is_t or subcat in traumatic,
                             is_nt or subcat in non_traumatic,
                             is_n or subcat in natural,
@@ -145,9 +145,9 @@ def main():
                                       user_id=ug_user AND
                                       ug_group!="bot";""" % page_id
                             cursor.execute(query)
-                            row = list(cursor.fetchone())
+                            edits_row = list(cursor.fetchone())
 
-                            if row[0] > opts.min_edits and t == 1:
+                            if edits_row[0] > opts.min_edits and t == 1:
                                 belonging = [is_t, is_nt, is_n, is_h]
                                 csv_writer[t].writerow(
                                     [page, t] + row + belonging
