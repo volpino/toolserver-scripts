@@ -106,8 +106,8 @@ def main():
                         SELECT DISTINCT page_title, page_id, cl_type
                         FROM page, categorylinks
                         WHERE cl_from = page_id
-                        AND cl_to = %s
-                """ % (subcats,)
+                        AND cl_to = "%s"
+                """ % (subcat,)
             #print query
             cursor.execute(query)
             result_set = cursor.fetchall()
