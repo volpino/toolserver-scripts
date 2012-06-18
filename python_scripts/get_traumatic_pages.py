@@ -160,7 +160,7 @@ def main():
                                     [page] + edits_row + belonging
                                 )
                             else:
-                                continue
+                                break
             del result_set
             gc.collect()
         [x.close() for x in fs]
