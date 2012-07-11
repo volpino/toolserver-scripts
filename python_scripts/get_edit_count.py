@@ -67,7 +67,7 @@ for page in infile:
         data = simplejson.load(urllib.urlopen(url))
         page_id = data["query"]["pages"].keys()[0]
         if page_id != -1:
-            query = """SELECT COUNT(*) AS total_edits,
+            query = """SELECT COUNT(DISTINCT rev_id) AS total_edits,
                               COUNT(DISTINCT rev_user) AS unique_editors
                        FROM revision, user, user_groups
                        WHERE rev_page=%s AND
