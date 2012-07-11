@@ -109,7 +109,11 @@ def main():
                         AND cl_to = "%s"
                 """ % (subcat,)
             #print query
-            cursor.execute(query)
+            try:
+                cursor.execute(query)
+            except:
+                print "ERROR! Subcat:", subcat
+                continue
             result_set = cursor.fetchall()
             #print result_set
             print len(result_set)
@@ -137,14 +141,19 @@ def main():
 
                         if page_id != -1:
                             query = """
-                                SELECT COUNT(*) AS tot_edits,
+                                SELECT COUNT(DISTINCT rev_id) AS tot_edits,
                                        COUNT(DISTINCT rev_user) AS editors
                                 FROM revision, user, user_groups
                                 WHERE rev_page=%s AND
                                       rev_user=user_id AND
                                       user_id=ug_user AND
                                       ug_group!="bot";""" % page_id
-                            cursor.execute(query)
+                            try:
+                                cursor.execute(query)
+                            except:
+                                print "Error! ", page
+                                continue
+
                             edits_row = list(cursor.fetchone())
 
                             if t == 0:
