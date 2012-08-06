@@ -20,17 +20,17 @@ DBNAME = ""
 # connect to the MySQL server
 tsc = ToolserverConfig()
 try:
-    conn = MySQLdb.connect (host=tsc.host,
-                            user=tsc.user,
-                            passwd=tsc.password,
-                            db="toolserver")
+    conn = MySQLdb.connect(host=tsc.host,
+                           user=tsc.user,
+                           passwd=tsc.password,
+                           db="toolserver")
 except MySQLdb.Error, e:
     print "Error %d: %s" % (e.args[0], e.args[1])
-    sys.exit (1)
+    sys.exit(1)
 
-cursor = conn.cursor ()
-cursor.execute ("SELECT server, dbname FROM wiki WHERE lang=%s AND family=%s",
-                (LANG, FAMILY))
+cursor = conn.cursor()
+cursor.execute("SELECT server, dbname FROM wiki WHERE lang=%s AND family=%s",
+               (LANG, FAMILY))
 row = cursor.fetchone()
 if row == None:
     print "Invalid wiki name!"
@@ -42,13 +42,13 @@ conn.close()
 print "Now connecting to ", SERVER, DBNAME
 
 try:
-    conn = MySQLdb.connect (host=SERVER,
+    conn = MySQLdb.connect(host=SERVER,
                             user=tsc.user,
                             passwd=tsc.password,
-                            db = DBNAME)
+                            db=DBNAME)
 except MySQLdb.Error, e:
     print "Error %d: %s" % (e.args[0], e.args[1])
-    sys.exit (1)
+    sys.exit(1)
 
 infile = open(sys.argv[1])
 csv_writer = csv.writer(open(sys.argv[2], 'w'), delimiter='|')
@@ -69,11 +69,11 @@ for page in infile:
         if page_id != -1:
             query = """SELECT COUNT(DISTINCT rev_id) AS total_edits,
                               COUNT(DISTINCT rev_user) AS unique_editors
-                       FROM revision, user, user_groups
+                       FROM revision JOIN user ON rev_user=user_id
+                            LEFT OUTER JOIN user_groups ON user_id=ug_user
                        WHERE rev_page=%s AND
-                             rev_user=user_id AND
-                             user_id=ug_user AND
-                             ug_group!="bot";""" % page_id
+                             (ug_group IS NULL OR ug_group!="bot");""" \
+                    % page_id
             cursor.execute(query)
             row = cursor.fetchone()
             if row:
@@ -86,5 +86,5 @@ for page in infile:
             else:
                 print "Error: page %s" % page
 csv_writer.writerows(queue)
-conn.commit ()
-conn.close ()
+conn.commit()
+conn.close()
