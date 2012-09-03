@@ -11,11 +11,13 @@ import re
 
 FIND_LINK = re.compile(r"\[\[[^\[\]]+\]\]")
 
+
 def perc(val, total):
     try:
         return float(val) / float(total)
     except (ZeroDivisionError, TypeError, ValueError):
         return 0
+
 
 def get_translation(code):
     name = ""
@@ -32,6 +34,7 @@ def get_translation(code):
     except KeyError:
         pass
     return name.encode("utf-8")
+
 
 def get_welcome_links(lang="en"):
     api_base = "http://en.wikipedia.org/w/api.php"
@@ -53,6 +56,7 @@ def get_welcome_links(lang="en"):
     else:
         links = len(FIND_LINK.findall(content))
     return links
+
 
 def get_welcome_data(lang="en", family="wikipedia"):
     api_base = "http://toolserver.org/~sonet/api.php"
@@ -115,7 +119,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
     conn = None
     user_count = "SELECT /* SLOW_OK */ COUNT(*) FROM user"
     edit_count = "SELECT /*SLOW_OK */ SUM(user_editcount) FROM user"
-    user_count_reg = ("SELECT /* SLOW OK */ COUNT(*) FROM user "
+    user_count_reg = ("SELECT /* SLOW_OK */ COUNT(*) FROM user "
                       "WHERE user_registration > %s")
     gender_count = """ SELECT /* SLOW_OK */
                            up_value, COUNT(*), SUM(user_editcount)
@@ -227,6 +231,7 @@ def get_data(start_date=None, output=sys.stdout, family="wikipedia"):
 
     f.close()
     conn.close ()
+
 
 def main():
     import optparse
